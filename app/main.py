@@ -1,6 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 import dotenv
+import time
 import logging
 import os
 import httpx
@@ -18,6 +20,29 @@ logging.basicConfig(
 
 # Initialize the app
 app = FastAPI()
+
+
+# Custom Middleware for Request Logging
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Log request details
+        logging.info(f"Incoming request: {request.method} {request.url}")
+        logging.debug(f"Headers: {dict(request.headers)}")
+
+        # Measure request processing time
+        start_time = time.time()
+        response = await call_next(request)
+        process_time = time.time() - start_time
+
+        # Log response details
+        logging.info(
+            f"Completed response: {response.status_code} in {process_time:.2f}s"
+        )
+        return response
+
+
+# Add middleware to the app
+app.add_middleware(RequestLoggingMiddleware)
 
 # Load .env file
 dotenv.load_dotenv()
