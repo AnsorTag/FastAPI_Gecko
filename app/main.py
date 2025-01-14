@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, status
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 import dotenv
@@ -20,6 +21,9 @@ logging.basicConfig(
 
 # Initialize the app
 app = FastAPI()
+
+# init security
+security = HTTPBasic()
 
 
 # Custom Middleware for Request Logging
@@ -50,6 +54,8 @@ dotenv.load_dotenv()
 # .env variables
 api_key = os.getenv("API_KEY")
 debug_mode = os.getenv("DEBUG_MODE", "false").lower() == "true"
+correct_username = os.getenv("TEST_USERNAME")
+correct_password = os.getenv("TEST_PASSWORD")
 
 # Log API key and Debug Mode
 logging.debug(f"API Key: {api_key}")
@@ -63,6 +69,20 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+# Security
+def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
+    if (
+        credentials.username != correct_username
+        or credentials.password != correct_password
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
 
 
 # Pydantic Schemas
@@ -89,8 +109,6 @@ class TransactionResponse(BaseModel):
 
 
 # Endpoints
-
-
 @app.get("/crypto/{crypto_name}", response_model=CryptoPriceResponse)
 async def get_crypto_data(crypto_name: str, db: Session = Depends(get_db)):
     logging.info(f"Fetching data for cryptocurrency: {crypto_name}")
@@ -98,12 +116,12 @@ async def get_crypto_data(crypto_name: str, db: Session = Depends(get_db)):
     # gecko url
     url = f"https://api.coingecko.com/api/v3/simple/price?ids={crypto_name}&vs_currencies=usd"
 
-    headers = {"Authorization": f"Bearer {api_key}"}
+    # headers = {"Authorization": f"Bearer {api_key}"}
 
     try:
         # Make the API request
         async with httpx.AsyncClient() as client:
-            response = await client.get(url, headers=headers)
+            response = await client.get(url)
 
         # Raise exception if request failed
         response.raise_for_status()
@@ -124,6 +142,7 @@ async def get_crypto_data(crypto_name: str, db: Session = Depends(get_db)):
     except httpx.HTTPStatusError as e:
         logging.error(f"HTTP error while fetching data for {crypto_name}: {e}")
         raise HTTPException(status_code=response.status_code, detail=str(e))
+
     except Exception as e:
         logging.error(f"Unexpected error while fetching data for {crypto_name}: {e}")
         raise HTTPException(status_code=500, detail="Unexpected error occurred")
@@ -175,3 +194,8 @@ def delete_transaction(transaction_id: int, db: Session = Depends(get_db)):
     if transaction is None:
         raise HTTPException(status_code=404, detail="Transaction not found")
     return {"message": f"Transaction with ID {transaction_id} deleted successfully"}
+
+
+@app.get("/protected")
+def read_protected(username: str = Depends(get_current_username)):
+    return {"message": "This is a protected route", "username": username}

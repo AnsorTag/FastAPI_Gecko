@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build: .
@@ -18,10 +16,5 @@ services:
       POSTGRES_USER: ansor
       POSTGRES_PASSWORD: "00005612"
       POSTGRES_DB: transaction_db
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5436:5432"
-# volumes:
-#   postgres_data:
-#     driver: local
+      - 5436:5432

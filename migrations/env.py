@@ -3,21 +3,17 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 from alembic import context
 from dotenv import load_dotenv
-from app.databases.db import Base  # Ensure this imports your SQLAlchemy Base
+from app.databases.db import Base
 
-# Load environment variables
 load_dotenv()
 
-# Alembic Config object
+# Config object
 config = context.config
 
-# Set the database URL dynamically
 config.set_main_option("sqlalchemy.url", os.getenv("DATABASE_URL"))
 
-# Interpret the config file for Python logging
 fileConfig(config.config_file_name)
 
-# Metadata object for 'autogenerate' support
 target_metadata = Base.metadata
 
 
