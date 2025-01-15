@@ -5,7 +5,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install curl
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl python3-distutils build-essential
 
 # Install Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 - \
@@ -16,7 +16,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 - \
 COPY pyproject.toml poetry.lock /app/
 
 # Install dependencies
-RUN poetry install --no-dev --no-root
+RUN poetry install --without dev --no-root
 
 # Install uvicorn
 RUN poetry add uvicorn
