@@ -4,8 +4,13 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from dotenv import load_dotenv
 from app.databases.db import Base
+from app.models.model import Transaction
 
 load_dotenv()
+
+# import pdb
+
+# pdb.set_trace()
 
 # Config object
 config = context.config

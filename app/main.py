@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 import dotenv
 import time
@@ -10,7 +10,8 @@ import httpx
 from sqlalchemy.orm import Session
 from app.databases.db import SessionLocal
 import app.crud as crud
-import app.models.model
+from app.models.model import Transaction
+from app.schemas.schemas import TransactionCreate, TransactionResponse
 from typing import Optional, List
 
 # Configure logging
@@ -85,27 +86,10 @@ def get_current_username(credentials: HTTPBasicCredentials = Depends(security)):
     return credentials.username
 
 
-# Pydantic Schemas
+# Pydantic Schema
 class CryptoPriceResponse(BaseModel):
     crypto_name: str
     price_usd: Optional[float] = None
-
-
-class TransactionCreate(BaseModel):
-    crypto_name: str = Field(..., max_length=50)
-    amount: float = Field(..., gt=0, title="Transaction Amount")
-    price_usd: float = Field(..., title="Price in USD")
-
-
-class TransactionResponse(BaseModel):
-    id: int
-    crypto_name: str
-    amount: float
-    price_usd: float
-    timestamp: str
-
-    class Config:
-        orm_mode = True
 
 
 # Endpoints

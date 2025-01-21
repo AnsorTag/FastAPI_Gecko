@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 from typing import Optional
+from datetime import datetime
 
 
 class TransactionCreate(BaseModel):
@@ -19,7 +20,10 @@ class TransactionResponse(BaseModel):
     crypto_name: str
     amount: float
     price_usd: float
-    timestamp: str
+    timestamp: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+    @field_serializer("timestamp")
+    def serialize_timestamp(self, timestamp: datetime, _info):
+        return timestamp.isoformat()

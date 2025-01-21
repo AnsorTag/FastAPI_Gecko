@@ -10,4 +10,4 @@ class Transaction(Base):
     crypto_name = Column(String, index=True)
     amount = Column(Float)
     price_usd = Column(Float)
-    timestamp = Column(TIMESTAMP, server_default=func.now())
+    timestamp = Column(TIMESTAMP(timezone=True), server_default=func.now())
